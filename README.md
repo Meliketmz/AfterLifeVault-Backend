@@ -43,6 +43,8 @@ POST /api/auth/email-verification/confirm
 
 Kodlar 1 dakika geçerlidir. Yeni kod gönderme aralığı 1 dakika, doğrulama
 denemesi ise kod başına en fazla 5 kezdir.
+Yeni kullanıcılar için kodlar `EMAIL_VERIFICATION` tablosunda tutulur; doğrulama
+sonrasında kullanıcı kaydı oluşturulabilir.
 
 ## Veritabanını oluşturma
 

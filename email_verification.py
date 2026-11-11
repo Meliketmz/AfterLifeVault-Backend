@@ -93,40 +93,58 @@ def request_email_verification(
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT "Id", "EmailVerified", "EmailVerificationLastSentAt"
-                FROM "USER"
-                WHERE lower("Email") = %s
+                SELECT "Id", "LastSentAt", "VerifiedAt"
+                FROM "EMAIL_VERIFICATION"
+                WHERE "Email" = %s
                 FOR UPDATE
                 """,
                 (payload.email,),
             )
-            user: dict[str, Any] | None = cursor.fetchone()
-            if user is None or user["EmailVerified"]:
+            verification: dict[str, Any] | None = cursor.fetchone()
+            if verification is not None and verification["VerifiedAt"] is not None:
                 return _generic_response()
 
-            last_sent_at = user["EmailVerificationLastSentAt"]
-            if last_sent_at and now - last_sent_at < SEND_COOLDOWN:
+            if (
+                verification is not None
+                and now - verification["LastSentAt"] < SEND_COOLDOWN
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     detail="Yeni kod göndermek için bir dakika bekleyin.",
                 )
 
-            cursor.execute(
-                """
-                UPDATE "USER"
-                SET "EmailVerificationCodeHash" = %s,
-                    "EmailVerificationExpiresAt" = %s,
-                    "EmailVerificationAttempts" = 0,
-                    "EmailVerificationLastSentAt" = %s
-                WHERE "Id" = %s
-                """,
-                (
-                    _hash_code(code),
-                    now + CODE_LIFETIME,
-                    now,
-                    user["Id"],
-                ),
-            )
+            if verification is None:
+                cursor.execute(
+                    """
+                    INSERT INTO "EMAIL_VERIFICATION"
+                        ("Email", "CodeHash", "ExpiresAt", "Attempts", "LastSentAt")
+                    VALUES (%s, %s, %s, 0, %s)
+                    """,
+                    (
+                        payload.email,
+                        _hash_code(code),
+                        now + CODE_LIFETIME,
+                        now,
+                    ),
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE "EMAIL_VERIFICATION"
+                    SET "CodeHash" = %s,
+                        "ExpiresAt" = %s,
+                        "Attempts" = 0,
+                        "LastSentAt" = %s,
+                        "VerifiedAt" = NULL
+                    WHERE "Id" = %s
+                    """,
+                    (
+                        _hash_code(code),
+                        now + CODE_LIFETIME,
+                        now,
+                        verification["Id"],
+                    ),
+                )
 
     EmailSender().send(
         recipients=payload.email,
@@ -149,22 +167,20 @@ def confirm_email_verification(
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT "Id", "EmailVerificationCodeHash",
-                       "EmailVerificationExpiresAt", "EmailVerificationAttempts",
-                       "EmailVerified"
-                FROM "USER"
-                WHERE lower("Email") = %s
+                SELECT "Id", "CodeHash", "ExpiresAt", "Attempts", "VerifiedAt"
+                FROM "EMAIL_VERIFICATION"
+                WHERE "Email" = %s
                 FOR UPDATE
                 """,
                 (payload.email,),
             )
-            user: dict[str, Any] | None = cursor.fetchone()
-            if user is None or user["EmailVerified"]:
+            verification: dict[str, Any] | None = cursor.fetchone()
+            if verification is None or verification["VerifiedAt"] is not None:
                 verification_error = True
             else:
-                expires_at = user["EmailVerificationExpiresAt"]
-                attempts = user["EmailVerificationAttempts"]
-                code_hash = user["EmailVerificationCodeHash"]
+                expires_at = verification["ExpiresAt"]
+                attempts = verification["Attempts"]
+                code_hash = verification["CodeHash"]
                 is_valid = (
                     bool(code_hash)
                     and bool(expires_at)
@@ -176,25 +192,32 @@ def confirm_email_verification(
                 if not is_valid:
                     cursor.execute(
                         """
-                        UPDATE "USER"
-                        SET "EmailVerificationAttempts" =
-                            LEAST("EmailVerificationAttempts" + 1, %s)
+                        UPDATE "EMAIL_VERIFICATION"
+                        SET "Attempts" = LEAST("Attempts" + 1, %s)
                         WHERE "Id" = %s
                         """,
-                        (MAX_ATTEMPTS, user["Id"]),
+                        (MAX_ATTEMPTS, verification["Id"]),
                     )
                     verification_error = True
                 else:
                     cursor.execute(
                         """
-                        UPDATE "USER"
-                        SET "EmailVerified" = TRUE,
-                            "EmailVerificationCodeHash" = NULL,
-                            "EmailVerificationExpiresAt" = NULL,
-                            "EmailVerificationAttempts" = 0
+                        UPDATE "EMAIL_VERIFICATION"
+                        SET "VerifiedAt" = %s,
+                            "CodeHash" = '',
+                            "ExpiresAt" = %s,
+                            "Attempts" = 0
                         WHERE "Id" = %s
                         """,
-                        (user["Id"],),
+                        (now, now, verification["Id"]),
+                    )
+                    cursor.execute(
+                        """
+                        UPDATE "USER"
+                        SET "EmailVerified" = TRUE
+                        WHERE lower("Email") = %s
+                        """,
+                        (payload.email,),
                     )
 
     if verification_error:

@@ -81,7 +81,9 @@ class EmailSender:
                 context=context,
             ) as smtp:
                 smtp.login(self.login, self.password)
-                smtp.send_message(message)
+                refused = smtp.send_message(message)
+                if refused:
+                    raise smtplib.SMTPRecipientsRefused(refused)
             return
 
         with smtplib.SMTP(self.server, self.port, timeout=self.timeout) as smtp:
@@ -89,4 +91,6 @@ class EmailSender:
             smtp.starttls(context=context)
             smtp.ehlo()
             smtp.login(self.login, self.password)
-            smtp.send_message(message)
+            refused = smtp.send_message(message)
+            if refused:
+                raise smtplib.SMTPRecipientsRefused(refused)
