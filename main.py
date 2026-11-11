@@ -2,7 +2,10 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from vault import router as vault_router
+
 app = FastAPI(title="Hello FastAPI")
+app.include_router(vault_router)
 
 
 @app.exception_handler(status.HTTP_404_NOT_FOUND)

@@ -64,6 +64,28 @@ class Database:
                 cursor.execute(query, params)
                 return cursor.fetchall()
 
+    def fetch_one(
+        self,
+        query: str,
+        params: Sequence[Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Run a SELECT query and return the first row, if one exists."""
+        with self.connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                return cursor.fetchone()
+
+    def execute_returning(
+        self,
+        query: str,
+        params: Sequence[Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Run a write query with RETURNING and return the affected row."""
+        with self.connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                return cursor.fetchone()
+
     def execute(self, query: str, params: Sequence[Any] | None = None) -> None:
         """Run an INSERT, UPDATE, or DELETE query."""
         with self.connection() as connection:

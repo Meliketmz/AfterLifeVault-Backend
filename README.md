@@ -21,6 +21,16 @@ DATABASE_URL="postgresql://..."
 
 `DATABASE_URL_POOLED` varsa öncelikli olarak kullanılır.
 
+## Veritabanını oluşturma
+
+Tabloları ve gerekli indexleri Neon üzerinde oluşturmak için:
+
+```bash
+python init_db.py
+```
+
+Komut tekrar çalıştırılabilir; mevcut tablolar silinmez.
+
 ## Çalıştırma
 
 ```bash
@@ -29,5 +39,8 @@ uvicorn main:app --reload
 
 API: <http://127.0.0.1:8000/api/hello>  
 Swagger dokümantasyonu: <http://127.0.0.1:8000/docs>
+
+Vault CRUD endpointleri `/api/vault-items` altında bulunur. Listeleme, görüntüleme,
+güncelleme ve silme işlemlerinde `owner_user_id` query parametresi zorunludur.
 
 Uygulama, bulunamayan kaynaklar için `404`, yetkisiz erişimler için `403` durum kodu ve JSON yanıt döndürür.
