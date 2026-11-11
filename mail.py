@@ -73,24 +73,30 @@ class EmailSender:
         message.set_content(body, subtype="html" if html else "plain")
 
         context = ssl.create_default_context()
-        if self.port == 465:
-            with smtplib.SMTP_SSL(
-                self.server,
-                self.port,
-                timeout=self.timeout,
-                context=context,
-            ) as smtp:
+        try:
+            if self.port == 465:
+                with smtplib.SMTP_SSL(
+                    self.server,
+                    self.port,
+                    timeout=self.timeout,
+                    context=context,
+                ) as smtp:
+                    smtp.login(self.login, self.password)
+                    refused = smtp.send_message(message)
+                    if refused:
+                        raise smtplib.SMTPRecipientsRefused(refused)
+                return
+
+            with smtplib.SMTP(self.server, self.port, timeout=self.timeout) as smtp:
+                smtp.ehlo()
+                smtp.starttls(context=context)
+                smtp.ehlo()
                 smtp.login(self.login, self.password)
                 refused = smtp.send_message(message)
                 if refused:
                     raise smtplib.SMTPRecipientsRefused(refused)
-            return
-
-        with smtplib.SMTP(self.server, self.port, timeout=self.timeout) as smtp:
-            smtp.ehlo()
-            smtp.starttls(context=context)
-            smtp.ehlo()
-            smtp.login(self.login, self.password)
-            refused = smtp.send_message(message)
-            if refused:
-                raise smtplib.SMTPRecipientsRefused(refused)
+        except TimeoutError as error:
+            raise RuntimeError(
+                f"SMTP sunucusuna bağlanırken zaman aşımı: {self.server}:{self.port}. "
+                "SMTP_PORT değerini ve Render ağ erişimini kontrol edin."
+            ) from error

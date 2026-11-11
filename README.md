@@ -33,6 +33,8 @@ EMAIL_VERIFICATION_SECRET="long-random-secret"
 ```
 
 `EmailSender` sınıfı 465 portunda SSL, diğer portlarda STARTTLS kullanır.
+Render üzerinde 587 bağlantısı zaman aşımına uğrarsa Brevo için `SMTP_PORT=2525`
+kullanın; bu port da STARTTLS kullanır.
 
 ## E-posta doğrulama
 
