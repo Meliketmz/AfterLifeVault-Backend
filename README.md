@@ -26,12 +26,23 @@ Mail gönderimi için SMTP bilgilerini de ekleyin:
 ```env
 SMTP_SERVER="smtp.example.com"
 SMTP_LOGIN="user@example.com"
-SMTP_PASSWORD="your-password"
+SMTP_PASS="your-password"
 SMTP_PORT=587
 MAIL_FROM="source@example.com"
+EMAIL_VERIFICATION_SECRET="long-random-secret"
 ```
 
 `EmailSender` sınıfı 465 portunda SSL, diğer portlarda STARTTLS kullanır.
+
+## E-posta doğrulama
+
+```text
+POST /api/auth/email-verification/request
+POST /api/auth/email-verification/confirm
+```
+
+Kodlar 1 dakika geçerlidir. Yeni kod gönderme aralığı 1 dakika, doğrulama
+denemesi ise kod başına en fazla 5 kezdir.
 
 ## Veritabanını oluşturma
 

@@ -16,6 +16,7 @@ class EmailSender:
         server: str | None = None,
         login: str | None = None,
         password: str | None = None,
+        from_address: str | None = None,
         port: int | None = None,
         timeout: float = 30.0,
     ) -> None:
@@ -23,6 +24,7 @@ class EmailSender:
         self.server = server or os.getenv("SMTP_SERVER")
         self.login = login or os.getenv("SMTP_LOGIN")
         self.password = password or os.getenv("SMTP_PASS")
+        self.from_address = from_address or os.getenv("MAIL_FROM")
 
         configured_port = port or os.getenv("SMTP_PORT")
         try:
@@ -36,6 +38,8 @@ class EmailSender:
             raise RuntimeError("SMTP_LOGIN .env içinde tanımlanmalıdır.")
         if not self.password:
             raise RuntimeError("SMTP_PASS .env içinde tanımlanmalıdır.")
+        if not self.from_address:
+            raise RuntimeError("MAIL_FROM .env içinde tanımlanmalıdır.")
         if not 1 <= self.port <= 65535:
             raise RuntimeError("SMTP_PORT 1 ile 65535 arasında olmalıdır.")
         if timeout <= 0:
@@ -63,7 +67,7 @@ class EmailSender:
             raise ValueError("Mail içeriği boş bırakılamaz.")
 
         message = EmailMessage()
-        message["From"] = sender or self.login
+        message["From"] = sender or self.from_address
         message["To"] = ", ".join(recipient_list)
         message["Subject"] = subject.strip()
         message.set_content(body, subtype="html" if html else "plain")
