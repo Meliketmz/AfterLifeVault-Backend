@@ -10,6 +10,11 @@ app.include_router(access_code_router)
 app.include_router(vault_router)
 
 
+@app.get("/health", include_in_schema=False)
+async def health_check() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 @app.exception_handler(status.HTTP_404_NOT_FOUND)
 async def not_found_handler(
     request: Request,
