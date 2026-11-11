@@ -21,6 +21,18 @@ DATABASE_URL="postgresql://..."
 
 `DATABASE_URL_POOLED` varsa öncelikli olarak kullanılır.
 
+Mail gönderimi için SMTP bilgilerini de ekleyin:
+
+```env
+SMTP_SERVER="smtp.example.com"
+SMTP_LOGIN="user@example.com"
+SMTP_PASSWORD="your-password"
+SMTP_PORT=587
+MAIL_FROM="source@example.com"
+```
+
+`EmailSender` sınıfı 465 portunda SSL, diğer portlarda STARTTLS kullanır.
+
 ## Veritabanını oluşturma
 
 Tabloları ve gerekli indexleri Neon üzerinde oluşturmak için:
