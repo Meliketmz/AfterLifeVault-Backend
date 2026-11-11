@@ -43,4 +43,8 @@ Swagger dokümantasyonu: <http://127.0.0.1:8000/docs>
 Vault CRUD endpointleri `/api/vault-items` altında bulunur. Listeleme, görüntüleme,
 güncelleme ve silme işlemlerinde `owner_user_id` query parametresi zorunludur.
 
+Access Code CRUD endpointleri `/api/access-codes` altında bulunur. Listeleme,
+görüntüleme, güncelleme ve silme işlemlerinde `recipient_id` query parametresi
+zorunludur. `code_hash` API yanıtlarında döndürülmez.
+
 Uygulama, bulunamayan kaynaklar için `404`, yetkisiz erişimler için `403` durum kodu ve JSON yanıt döndürür.

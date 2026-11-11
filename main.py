@@ -2,9 +2,11 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from access_code import router as access_code_router
 from vault import router as vault_router
 
 app = FastAPI(title="Hello FastAPI")
+app.include_router(access_code_router)
 app.include_router(vault_router)
 
 
